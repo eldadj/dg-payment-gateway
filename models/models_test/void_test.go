@@ -13,29 +13,33 @@ func (ts *TestSuite) TestVoid() {
 	ts.CreateTestCreditCards()
 	ts.CreateTestMerchants()
 	ts.CreateTestAuthorizes()
-	tests := []struct {
-		name          string
+	type args struct {
 		authorizeCode string
-		wantErr       bool
-		wantValue     interface{}
+		merchantId    int64
+	}
+	tests := []struct {
+		name string
+		args
+		wantErr   bool
+		wantValue interface{}
 	}{
 		{
-			name:          "invalid authorize code",
-			authorizeCode: "invalid",
-			wantErr:       true,
-			wantValue:     errors.ErrAuthorizeCodeNotFound,
+			name:      "invalid authorize code",
+			args:      args{authorizeCode: "invalid", merchantId: ts.ValidMerchantID()},
+			wantErr:   true,
+			wantValue: errors.ErrAuthorizeCodeNotFound,
 		},
 		{
-			name:          "cannot void authorize code",
-			authorizeCode: ts.AuthorizeCodeAlreadyVoided(),
-			wantErr:       true,
-			wantValue:     errors.ErrAuthorizeCannotVoid,
+			name:      "cannot void authorize code",
+			args:      args{authorizeCode: ts.AuthorizeCodeAlreadyVoided(), merchantId: 1000001},
+			wantErr:   true,
+			wantValue: errors.ErrAuthorizeCannotVoid,
 		},
 		{
-			name:          "authorize code voided",
-			authorizeCode: ts.AuthorizeCodeCanBeVoided(),
-			wantErr:       false,
-			wantValue:     ts.AuthorizeCodeCanBeVoided(),
+			name:      "authorize code voided",
+			args:      args{authorizeCode: ts.AuthorizeCodeCanBeVoided(), merchantId: 1000000},
+			wantErr:   false,
+			wantValue: ts.AuthorizeCodeCanBeVoided(),
 		},
 	}
 
@@ -43,7 +47,8 @@ func (ts *TestSuite) TestVoid() {
 		t := ts.T()
 		t.Run(tt.name, func(t *testing.T) {
 			req := void.Request{
-				AuthorizeCode: payment.AuthorizeCode{Code: tt.authorizeCode},
+				AuthorizeCode: payment.AuthorizeCode{Code: tt.args.authorizeCode},
+				Request:       payment.Request{MerchantId: tt.args.merchantId},
 			}
 			//ctx, cancel := context.WithCancel(context.Background())
 			resp, err := void2.Void(req)

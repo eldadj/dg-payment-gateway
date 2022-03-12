@@ -20,6 +20,7 @@ func (ts *TestSuite) TestDoRefund() {
 	type args struct {
 		authorizeCode string
 		amount        float64
+		merchantId    int64
 	}
 	tests := []struct {
 		name      string
@@ -30,19 +31,19 @@ func (ts *TestSuite) TestDoRefund() {
 	}{
 		{
 			name:      "invalid authorize code",
-			arg:       args{authorizeCode: "invalid", amount: 200},
+			arg:       args{authorizeCode: "invalid", amount: 200, merchantId: ts.ValidMerchantID()},
 			wantErr:   true,
 			wantValue: errors.ErrAuthorizeCodeNotFound,
 		},
 		{
 			name:      "cannot refund authorize code",
-			arg:       args{authorizeCode: ts.AuthorizeCodeCannotBeRefunded(), amount: 0},
+			arg:       args{authorizeCode: ts.AuthorizeCodeCannotBeRefunded(), amount: 0, merchantId: 1000001},
 			wantErr:   true,
 			wantValue: errors.ErrAuthorizeCannotRefund,
 		},
 		{
 			name:      "refund amount not found",
-			arg:       args{authorizeCode: ts.RefundAmountInvalidAuthorizeCode(), amount: 1000},
+			arg:       args{authorizeCode: ts.RefundAmountInvalidAuthorizeCode(), amount: 1000, merchantId: 1000001},
 			wantErr:   true,
 			wantValue: errors.ErrRefundAmount,
 		},
@@ -54,6 +55,7 @@ func (ts *TestSuite) TestDoRefund() {
 			req := request.Request{
 				AuthorizeCode: payment.AuthorizeCode{Code: tt.arg.authorizeCode},
 				Amount:        tt.arg.amount,
+				Request:       payment.Request{MerchantId: tt.arg.merchantId},
 			}
 			resp, err := refund.DoRefund(req)
 			if tt.wantErr {
@@ -78,6 +80,7 @@ func (ts *TestSuite) TestDoRefund() {
 		req := request.Request{
 			AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
 			Amount:        10,
+			Request:       payment.Request{MerchantId: ts.ValidMerchantID()},
 		}
 		resp, err := refund.DoRefund(req)
 		assert.Nil(t, err)
