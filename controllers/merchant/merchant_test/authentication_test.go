@@ -6,7 +6,6 @@ import (
 	"github.com/beego/beego/v2/server/web"
 	"github.com/eldadj/dgpg/dto/merchant/authenticate"
 	"github.com/eldadj/dgpg/internal/errors"
-	"github.com/eldadj/dgpg/internal/model"
 	//_ "github.com/eldadj/dgpg/routers"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -34,7 +33,7 @@ func (ts *TestSuite) TestAuthentication() {
 				Password: "invalid_password",
 			},
 			wantCode: 500,
-			wantResp: model.ErrMerchantAuthenticationFailed.Error(),
+			wantResp: errors.ErrMerchantAuthenticationFailed.Error(),
 		},
 		{
 			name: "authenticate ok",
