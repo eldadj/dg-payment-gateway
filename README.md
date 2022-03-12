@@ -31,3 +31,19 @@ F. Extra mile
 2. Client (merchant) authentication
 3. Containerization
 4. Application logging with logrus
+5. Ensure authorize code belongs to merchant
+
+G. Test Parameters
+1. Merchant 1:
+
+   *username*: **m1**
+ 
+   *password*: **merchant1**
+
+
+2. Merchant 2:
+
+   *username*: **m1**
+
+   *password*: **merchant2**
+
