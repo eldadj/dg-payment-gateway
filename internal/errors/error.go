@@ -24,6 +24,7 @@ var (
 	ErrMerchantLoad                          = errors.New("error loading merchant info")
 	ErrMerchantTokenExpired                  = errors.New("your login session has expired")
 	ErrMerchantInvalidToken                  = errors.New("invalid authentication token")
+	ErrInvalidMerchantAuthorizeCode          = errors.New("authorize code is invalid for merchant")
 	ErrAuthorizeInsufficientCreditCardAmount = errors.New("insufficient amount in credit card")
 	ErrAuthorizeFailed                       = errors.New("error completing authorize")
 	ErrAuthorizeCreditCardFailed             = errors.New("credit card authorisation failure")

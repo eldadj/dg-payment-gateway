@@ -6,11 +6,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func Get(authorizeCode string) (a Authorize, err error) {
+func Get(authorizeCode string, merchantId int64) (a Authorize, err error) {
 	err = models.ExecDBFuncReadOnly(func(tx *gorm.DB) error {
 		result := tx.Find(&a, "authorize_code = ?", authorizeCode)
 		if result.RowsAffected == 0 {
 			return errors.ErrAuthorizeCodeNotFound
+		}
+		// check if for the merchant
+		if a.MerchantId != merchantId {
+			return errors.ErrInvalidMerchantAuthorizeCode
 		}
 		return nil
 	})
