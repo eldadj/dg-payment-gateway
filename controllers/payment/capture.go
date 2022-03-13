@@ -28,7 +28,7 @@ func validateCapture(c *BaseController) (req request.Request, err error) {
 	if err = json.Unmarshal(c.Ctx.Input.RequestBody, &req); err != nil {
 		return req, errors.LogError(err, errors.ErrInvalidRequestData)
 	}
-	if req.Amount < 0 {
+	if req.Amount <= 0 {
 		return req, errors.ErrCaptureAmount
 	}
 
