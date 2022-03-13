@@ -1,26 +1,24 @@
 package models_test
 
 import (
+	"testing"
+
 	"github.com/eldadj/dgpg/dto/payment"
 	"github.com/eldadj/dgpg/dto/payment/request"
 	"github.com/eldadj/dgpg/internal/errors"
 	"github.com/eldadj/dgpg/models/capture"
 	"github.com/eldadj/dgpg/models/refund"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func (ts *TestSuite) TestDoRefund() {
-	ts.CreateTestCaptures()
-	ts.CreateTestAuthorizes()
 	ts.CreateTestMerchants()
-	ts.CreateTestCreditCards()
-	ts.ResetCreditCardAmountForRefund()
+	validAuthorizeCode, _, err := ts.AuthoriseTestCreateUSDAuthorize()
+	assert.Nil(ts.T(), err)
 
 	type args struct {
 		authorizeCode string
 		amount        float64
-		merchantId    int64
 	}
 	tests := []struct {
 		name      string
@@ -31,19 +29,19 @@ func (ts *TestSuite) TestDoRefund() {
 	}{
 		{
 			name:      "invalid authorize code",
-			arg:       args{authorizeCode: "invalid", amount: 200, merchantId: ts.ValidMerchantID()},
+			arg:       args{authorizeCode: "invalid", amount: 20},
 			wantErr:   true,
 			wantValue: errors.ErrAuthorizeCodeNotFound,
 		},
 		{
-			name:      "cannot refund authorize code",
-			arg:       args{authorizeCode: ts.AuthorizeCodeCannotBeRefunded(), amount: 0, merchantId: 1000001},
+			name:      "amount cannot be refuned",
+			arg:       args{authorizeCode: validAuthorizeCode, amount: 0},
 			wantErr:   true,
-			wantValue: errors.ErrAuthorizeCannotRefund,
+			wantValue: errors.ErrRefundAmount,
 		},
 		{
 			name:      "refund amount not found",
-			arg:       args{authorizeCode: ts.RefundAmountInvalidAuthorizeCode(), amount: 1000, merchantId: 1000001},
+			arg:       args{authorizeCode: validAuthorizeCode, amount: 1000},
 			wantErr:   true,
 			wantValue: errors.ErrRefundAmount,
 		},
@@ -55,7 +53,6 @@ func (ts *TestSuite) TestDoRefund() {
 			req := request.Request{
 				AuthorizeCode: payment.AuthorizeCode{Code: tt.arg.authorizeCode},
 				Amount:        tt.arg.amount,
-				Request:       payment.Request{MerchantId: tt.arg.merchantId},
 			}
 			resp, err := refund.DoRefund(req)
 			if tt.wantErr {
@@ -68,45 +65,36 @@ func (ts *TestSuite) TestDoRefund() {
 	}
 
 	//test refund ok
-	ts.CreateTestMerchants()
-	ts.CreateTestAuthorizes()
-	ts.CreateTestCreditCards()
-	ts.CreateTestRefundCaptures()
 	ts.T().Run("refund ok", func(t *testing.T) {
-		ts.ResetCreditCardAmountForRefund()
-		creditCardAmount := 950.0
-		authorizeCode := "30000001"
-		//credit card initial amount = 1000
+		authorizeCode, resp, err := ts.CaptureTestCreate200USDAuthorizeCapture10N50USD()
+		assert.Nil(t, err)
+
+		authorizeAmountBalance := resp.Amount
 		req := request.Request{
 			AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
 			Amount:        10,
-			Request:       payment.Request{MerchantId: ts.ValidMerchantID()},
 		}
-		resp, err := refund.DoRefund(req)
-		assert.Nil(t, err)
-		//card amount should increase by refund value
-		assert.Equal(t, creditCardAmount+req.Amount, resp.Amount)
-
-		creditCardAmount = resp.Amount
-		req.Amount = 20
+		//will refund
 		resp, err = refund.DoRefund(req)
 		assert.Nil(t, err)
-		assert.Equal(t, creditCardAmount+req.Amount, resp.Amount)
-		creditCardAmount = resp.Amount
+		authorizeAmountBalance = authorizeAmountBalance + req.Amount
+		assert.Equal(t, authorizeAmountBalance, resp.Amount)
 
+		//cannot refund since not captured
 		req.Amount = 30
 		resp, err = refund.DoRefund(req)
 		assert.NotNil(t, err)
 		assert.EqualError(t, err, errors.ErrRefundAmount.Error())
 
+		//will refund
+		req.Amount = 50
+		resp, err = refund.DoRefund(req)
+		assert.Nil(t, err)
+		assert.Equal(t, authorizeAmountBalance+req.Amount, resp.Amount)
+
+		//already done a refund, cannot capture
 		_, err = capture.DoCapture(req)
 		assert.NotNil(t, err)
 		assert.EqualError(t, err, errors.ErrAuthorizeCannotCapture.Error())
-
-		//creditCardAmount = resp.Amount
-		req.Amount = 20
-		resp, err = refund.DoRefund(req)
-		assert.Nil(t, err)
-		assert.Equal(t, creditCardAmount+req.Amount, resp.Amount)
 	})
 }

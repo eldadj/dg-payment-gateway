@@ -3,13 +3,24 @@
 package shared_suite
 
 import (
+	"context"
 	"github.com/beego/beego/v2/server/web"
+	"github.com/eldadj/dgpg/dto/payment"
+	"github.com/eldadj/dgpg/dto/payment/authorize"
+	"github.com/eldadj/dgpg/dto/payment/request"
+	"github.com/eldadj/dgpg/dto/payment/response"
+	"github.com/eldadj/dgpg/internal/errors"
+	"github.com/eldadj/dgpg/internal/merchant"
 	"github.com/eldadj/dgpg/models"
+	authorize2 "github.com/eldadj/dgpg/models/authorize"
+	capture2 "github.com/eldadj/dgpg/models/capture"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
+	"math/rand"
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 )
 
 type TestSuite struct {
@@ -24,28 +35,7 @@ func init() {
 }
 
 func Test(t *testing.T) {
-	//beego.TestBeegoInit("/Users/eldadonojetah/Documents/git/sholagracetech/accesspower/powervending/integrations/buypower/go_buypower")
-	//suite.Run(t, new(TestSuite))
 	suite.Run(t, &TestSuite{})
-}
-
-func (ts *TestSuite) CreateTestCreditCards() {
-	ts.DeleteTestCreditCards()
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		//merchantId: 1000000, creditCardId: 1000000, currency: "USD", amount: 100
-		tx.Exec(`
-insert into credit_card(credit_card_id, owner_name,card_no,exp_month,exp_year,cvv,currency_code,current_amount) values
-(1000000,'Test Card 1', '4000 0600 0000 0006', 12, 22, 'CVV', 'USD', 1000),
-(1000001,'Test Card 2', '4035 5010 0000 0008', 10, 22, 'CV2', 'EUR', 1500)`)
-		return nil
-	})
-}
-
-func (ts *TestSuite) DeleteTestCreditCards() {
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		tx.Exec(`delete from credit_card where credit_card_id >= 1000000 or card_no like 'T%'`)
-		return nil
-	})
 }
 
 func (ts *TestSuite) CreateTestMerchants() {
@@ -54,8 +44,8 @@ func (ts *TestSuite) CreateTestMerchants() {
 		//merchantId: 1000000, creditCardId: 1000000, currency: "USD", amount: 100
 		tx.Exec(`
 insert into merchant(merchant_id, fullname, user_name, pwd_hash) values
-(1000000,'Test Merchant 1', 'tm1', '$2a$12$lLBP7ylkt0pTp5EkeQQJwur5rtqB82LVvEvJC.qMr904EKFG/YjGy'),
-(1000001,'Test Merchant 1', 'tm1', '$2a$12$SLbYUEu5h5cs7bPrW71lSebul0K/2/JB/0jDkVv1NS/NIWhukZTVy')`)
+(1000000,'Test Merchant 1', 'tm1', '$2a$12$l6pwgwg0vCknO5heebp/Ze/5FRnC7JD/8Tp.j/tY.sbHJ2nu6Lf3m'),
+(1000001,'Test Merchant 2', 'tm2', '$2a$12$GjTxK/2.t.mlHLcP6OjAVunxM/U1LI7NWrwItMSVwUF0EukCvMzbe')`)
 		return nil
 	})
 }
@@ -67,116 +57,62 @@ func (ts *TestSuite) DeleteTestMerchants() {
 	})
 }
 
-func (ts *TestSuite) CreateTestAuthorizes() {
-	ts.DeleteTestAuthorizes()
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		//merchantId: 1000000, creditCardId: 1000000, currency: "USD", amount: 100
-		tx.Exec(`
-insert into authorize(authorize_id, merchant_id, credit_card_id, currency,amount,authorize_code, status) values 
-(1000000,1000000,1000000,'USD', 50, '10000001', 'n'),
-(1000001,1000001,1000000,'USD', 150, '10000002', 'n'),
-(1000002,1000000,1000000,'USD', 252, '10000003', 'n'),
-(1000010,1000001,1000001,'EUR', 27, '10000011', 'n'),
-(1000011,1000001,1000001,'EUR', 85, '10000012', 'n'),
-(1000012,1000001,1000001,'EUR', 63, '10000013', 'n'),
-(1000013,1000001,1000001,'EUR', 110, '10000014', 'n'),
-(2000100,1000001,1000001,'EUR', 63, '11000013', 'v'),
-(2000101,1000001,1000001,'EUR', 63, '11000014', 'r'),
-(2000102,1000001,1000001,'EUR', 25, '11000015', 'p'),
-(2000103,1000001,1000001,'EUR', 63, '11000016', 'c')
+func (ts *TestSuite) AuthoriseTestCreateUSDAuthorize() (string, float64, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	//validate token so we have a merchantId stored
+	merchant.Validate(&ctx, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtaWQiOjJ9.2UtNBvBcZJlwatvbiuFkFwWS7ZliHcIs7_ZxMTFt9sE")
+	rand.Seed(time.Now().UnixNano())
+	//min := 100
+	//max := 1000
+	authorizeAmount := float64(200) //rand.Intn((max-min)+min) * 1.0)
+	req := authorize.Request{
+		CreditCard: payment.CreditCard{
+			OwnerName: "eldad onojetah",
+			Number:    "4035 5010 0000 0008",
+			ExpMonth:  10,
+			ExpYear:   22,
+			CVV:       "TTT",
+		},
+		AmountCurrency: payment.AmountCurrency{
+			Amount: authorizeAmount, Currency: "USD",
+		},
+	}
+	resp, err := authorize2.DoAuthorize(ctx, req)
+	cancel()
 
-`)
-		return nil
-	})
+	return resp.Code, authorizeAmount, err
 }
 
-func (ts *TestSuite) DeleteTestAuthorizes() {
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		tx.Exec(`delete from authorize where authorize_id >= 1000000 `)
-		return nil
-	})
+func (ts *TestSuite) CaptureTestCreate200USDAuthorizeCapture10N50USD() (string, response.Response, error) {
+	authorizeCode, authorizeAmount, err := ts.AuthoriseTestCreateUSDAuthorize()
+	//capture 10USD
+	req := request.Request{
+		AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
+		Amount:        10,
+	}
+	resp, err := capture2.DoCapture(req)
+
+	//capture  50USD
+	req = request.Request{
+		AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
+		Amount:        50,
+	}
+	resp, err = capture2.DoCapture(req)
+	if resp.Amount != authorizeAmount-50-10 {
+		return "", resp, errors.ErrCapture
+	}
+	return authorizeCode, resp, err
 }
 
-func (ts *TestSuite) CreateTestCaptures() {
-	ts.DeleteTestCaptures()
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		tx.Exec(`
-insert into capture(capture_id, amount, authorize_id) values
-(1000000,20, 1000000),
-(1000001,10, 1000010),
-(1000002,7, 1000010)
-`)
-		return nil
-	})
-}
-
-func (ts *TestSuite) CreateTestRefundCaptures() {
-
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		err := tx.Exec(`
-insert into authorize(authorize_id, merchant_id, credit_card_id, currency,amount,authorize_code, status) values
-(3000000,1000000,1000000,'USD', 50, '30000001', 'p')`).Error
-		//println(err)
-		err = tx.Exec(`insert into capture(capture_id, amount, authorize_id) values
-(3000000,20, 3000000),
-(3000001,10, 3000000),
-(3000002,20, 3000000)`).Error
-		//println(err)
-		//reduce card amount
-		err = tx.Exec(`update credit_card set current_amount = current_amount - 50 where credit_card_id = 1000000`).Error
-		//println(err)
-		return err
-	})
-
-}
-
-func (ts *TestSuite) DeleteTestCaptures() {
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		tx.Exec(`delete from capture where capture_id >= 1000000 or authorize_id >= 1000000`)
-		return nil
-	})
-}
-
-func (ts *TestSuite) ResetCreditCardAmount() {
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		tx.Exec(`update credit_card set current_amount = 1000 where credit_card_id = 1000000`)
-		return nil
-	})
-}
-
-func (ts *TestSuite) ResetCreditCardAmountForRefund() {
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		tx.Exec(`update credit_card set current_amount = 950 where credit_card_id = 1000000`)
-		return nil
-	})
-}
-
-func (ts *TestSuite) AuthorizeCodeAlreadyVoided() string {
-	return "11000013"
-}
-
-func (ts *TestSuite) AuthorizeCodeCanBeVoided() string {
-	return "10000001"
-}
-
-func (ts *TestSuite) AuthorizeCodeCannotBeRefunded() string {
-	return "11000013"
-}
-
-func (ts *TestSuite) CaptureCanCaptureAuthorizeCode() string {
-	return "10000001"
-}
-
-func (ts *TestSuite) CaptureCannotCaptureAuthorizeCode() string {
-	return "11000016"
-}
-
-func (ts *TestSuite) CaptureAuthorizedAmountExceedsAuthorizeCode() string {
-	return "1000010"
-}
-
-func (ts *TestSuite) RefundAmountInvalidAuthorizeCode() string {
-	return "11000015"
+func (ts *TestSuite) VoidTestCreate200USDAuthorizeCapture20USD() (string, error) {
+	authorizeCode, _, err := ts.AuthoriseTestCreateUSDAuthorize()
+	//capture 10USD
+	req := request.Request{
+		AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
+		Amount:        20,
+	}
+	_, err = capture2.DoCapture(req)
+	return authorizeCode, err
 }
 
 //n = new just created,

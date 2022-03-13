@@ -12,13 +12,13 @@ import (
 
 //CanVoid only a new authorize
 func (a *Authorize) CanVoid() bool {
-	return strings.EqualFold("n", a.Status) || strings.EqualFold("p", a.Status)
+	return strings.EqualFold("n", a.Status) //|| strings.EqualFold("p", a.Status)
 }
 
 //CanCapture authorize that is ok/new and has not refund
 func (a *Authorize) CanCapture() bool {
 	//when voided
-	return a.CanVoid() && !a.HasRefund
+	return (strings.EqualFold("n", a.Status) || strings.EqualFold("p", a.Status)) && !a.HasRefund
 }
 
 //CanRefund only refund when not voided
