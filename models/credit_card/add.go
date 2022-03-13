@@ -7,7 +7,7 @@ import (
 )
 
 func Add(tx *gorm.DB, payCC payment.CreditCard, payAC payment.AmountCurrency) (
-	creditCardId int64, ac payment.AmountCurrency, err error) {
+	creditCardId int64, err error) {
 	var cc creditCard
 	//card is tied to authorize via credit_card_id
 	// we add it to db
@@ -25,9 +25,6 @@ func Add(tx *gorm.DB, payCC payment.CreditCard, payAC payment.AmountCurrency) (
 	}
 
 	creditCardId = cc.CreditCardId
-	//get existing values
-	ac.Amount = cc.CurrentAmount
-	ac.Currency = cc.CurrencyCode
 
 	return
 }
