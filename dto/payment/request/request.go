@@ -1,4 +1,4 @@
-// Package capture request/response objects for capture endpoint
+// Package request request/response objects for capture endpoint
 package request
 
 import (
@@ -9,6 +9,8 @@ import (
 type Request struct {
 	payment.AuthorizeCode
 	Amount float64 `json:"amount"`
+	// so we have access to MerchantId
+	payment.Request
 }
 
 func (r *Request) Validate() error {

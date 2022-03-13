@@ -59,11 +59,8 @@ func (ts *TestSuite) AfterTest(suiteName, testName string) {
 	ts.DeleteTestMerchants()
 	ts.DeleteTestCreditCards()
 	ts.ResetCreditCardAmount()
+}
 
-	/*if strings.EqualFold(testName, "TestDoCapture") || strings.EqualFold(testName, "TestDoRefund") {
-		ts.DeleteTestCaptures()
-	}
-	if strings.EqualFold(testName, "TestDoRefund") {
-		ts.ResetCreditCardAmount()
-	}*/
+func (ts *TestSuite) ValidMerchantID() int64 {
+	return 1000000
 }

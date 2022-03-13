@@ -11,7 +11,7 @@ import (
 
 func Void(req void.Request) (resp void.Response, err error) {
 	//var a authorize.Authorize
-	a, err := authorize.Get(req.Code)
+	a, err := authorize.Get(req.Code, req.MerchantId)
 	if err != nil {
 		return resp, err
 	}

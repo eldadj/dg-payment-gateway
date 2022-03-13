@@ -17,6 +17,7 @@ func (ts *TestSuite) TestDoCapture() {
 	type args struct {
 		authorizeCode string
 		amount        float64
+		merchantId    int64
 	}
 	tests := []struct {
 		name      string
@@ -27,25 +28,29 @@ func (ts *TestSuite) TestDoCapture() {
 	}{
 		{
 			name:      "invalid authorize code",
-			arg:       args{authorizeCode: "invalid", amount: 200},
+			arg:       args{authorizeCode: "invalid", amount: 200, merchantId: ts.ValidMerchantID()},
 			wantErr:   true,
 			wantValue: errors.ErrAuthorizeCodeNotFound,
 		},
 		{
 			name:      "invalid amount",
-			arg:       args{authorizeCode: ts.CaptureCanCaptureAuthorizeCode(), amount: 0},
+			arg:       args{authorizeCode: ts.CaptureCanCaptureAuthorizeCode(), amount: 0, merchantId: ts.ValidMerchantID()},
 			wantErr:   true,
 			wantValue: errors.ErrCaptureAmount,
 		},
 		{
-			name:      "capture amount exceeds authorized amount",
-			arg:       args{authorizeCode: ts.CaptureCanCaptureAuthorizeCode(), amount: 1000},
+			name: "capture amount exceeds authorized amount",
+			arg: args{
+				authorizeCode: ts.CaptureCanCaptureAuthorizeCode(),
+				amount:        1000,
+				merchantId:    ts.ValidMerchantID(),
+			},
 			wantErr:   true,
 			wantValue: errors.ErrCaptureAmountExceedsAuthorizeAmount,
 		},
 		{
 			name:    "capture ok",
-			arg:     args{authorizeCode: ts.CaptureCanCaptureAuthorizeCode(), amount: 10},
+			arg:     args{authorizeCode: ts.CaptureCanCaptureAuthorizeCode(), amount: 10, merchantId: ts.ValidMerchantID()},
 			wantErr: false,
 		},
 	}
@@ -56,6 +61,7 @@ func (ts *TestSuite) TestDoCapture() {
 			req := request.Request{
 				AuthorizeCode: payment.AuthorizeCode{Code: tt.arg.authorizeCode},
 				Amount:        tt.arg.amount,
+				Request:       payment.Request{MerchantId: tt.arg.merchantId},
 			}
 			resp, err := capture2.DoCapture(req)
 			if tt.wantErr {
@@ -78,6 +84,7 @@ func (ts *TestSuite) TestDoCapture() {
 		req := request.Request{
 			AuthorizeCode: payment.AuthorizeCode{Code: ts.CaptureCanCaptureAuthorizeCode()},
 			Amount:        10,
+			Request:       payment.Request{MerchantId: ts.ValidMerchantID()},
 		}
 		resp, err := capture2.DoCapture(req)
 		assert.Nil(t, err)

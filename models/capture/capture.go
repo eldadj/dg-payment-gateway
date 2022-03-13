@@ -27,7 +27,7 @@ func DoCapture(req request.Request) (resp response.Response, err error) {
 	var auth authorize.Authorize
 
 	// 1 get authorize record
-	if auth, err = authorize.Get(req.Code); err != nil {
+	if auth, err = authorize.Get(req.Code, req.MerchantId); err != nil {
 		return resp, err
 	}
 

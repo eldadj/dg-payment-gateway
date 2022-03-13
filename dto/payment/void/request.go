@@ -7,6 +7,8 @@ import (
 
 type Request struct {
 	payment.AuthorizeCode
+	// so we have access to MerchantId
+	payment.Request
 }
 
 func (r *Request) Validate() error {
