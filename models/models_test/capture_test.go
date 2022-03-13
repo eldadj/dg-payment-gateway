@@ -10,9 +10,11 @@ import (
 )
 
 func (ts *TestSuite) TestDoCapture() {
-	ts.CreateTestCreditCards()
+	//ts.CreateTestCreditCards()
 	ts.CreateTestMerchants()
-	ts.CreateTestAuthorizes()
+	//ts.CreateTestAuthorizes()
+	validAuthorizeCode, err := ts.Create200USDAuthorize()
+	assert.Nil(ts.T(), err)
 
 	type args struct {
 		authorizeCode string
@@ -33,19 +35,19 @@ func (ts *TestSuite) TestDoCapture() {
 		},
 		{
 			name:      "invalid amount",
-			arg:       args{authorizeCode: ts.CaptureCanCaptureAuthorizeCode(), amount: 0},
+			arg:       args{authorizeCode: validAuthorizeCode, amount: 0},
 			wantErr:   true,
 			wantValue: errors.ErrCaptureAmount,
 		},
 		{
 			name:      "capture amount exceeds authorized amount",
-			arg:       args{authorizeCode: ts.CaptureCanCaptureAuthorizeCode(), amount: 1000},
+			arg:       args{authorizeCode: validAuthorizeCode, amount: 1000},
 			wantErr:   true,
 			wantValue: errors.ErrCaptureAmountExceedsAuthorizeAmount,
 		},
 		{
 			name:    "capture ok",
-			arg:     args{authorizeCode: ts.CaptureCanCaptureAuthorizeCode(), amount: 10},
+			arg:     args{authorizeCode: validAuthorizeCode, amount: 10},
 			wantErr: false,
 		},
 	}
@@ -68,15 +70,13 @@ func (ts *TestSuite) TestDoCapture() {
 	}
 
 	//exceed amount
-	ts.T().Run("capture amount exceeded", func(t *testing.T) {
+	ts.T().Run("capture amount will exceed authorized amount", func(t *testing.T) {
 		//ts.DeleteTestCaptures()
-		ts.ResetCreditCardAmount()
-		ts.CreateTestAuthorizes()
 		//authAmount := 50
 		creditCardAmount := 1000.0
 		//credit card initial amount = 1000
 		req := request.Request{
-			AuthorizeCode: payment.AuthorizeCode{Code: ts.CaptureCanCaptureAuthorizeCode()},
+			AuthorizeCode: payment.AuthorizeCode{Code: validAuthorizeCode},
 			Amount:        10,
 		}
 		resp, err := capture2.DoCapture(req)

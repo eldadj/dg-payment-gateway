@@ -1,12 +1,16 @@
 package models_test
 
 import (
+	"context"
+	"github.com/eldadj/dgpg/dto/payment"
+	"github.com/eldadj/dgpg/dto/payment/authorize"
+	"github.com/eldadj/dgpg/internal/merchant"
 	"github.com/eldadj/dgpg/models"
+	authorize2 "github.com/eldadj/dgpg/models/authorize"
 	_ "github.com/eldadj/dgpg/routers"
 	"github.com/eldadj/dgpg/shared_suite"
 	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
-	"strings"
 	"testing"
 )
 
@@ -25,45 +29,41 @@ func (ts *TestSuite) SetupSuite() {
 }
 
 func (ts *TestSuite) TearDownSuite() {
-	ts.DeleteTestCaptures()
-	ts.DeleteTestAuthorizes()
 	ts.DeleteTestMerchants()
-	ts.DeleteTestCreditCards()
+	models.ExecDBFunc(func(tx *gorm.DB) error {
+		tx.Exec(`delete from credit_card`)
+		tx.Exec(`delete from authorize`)
+		tx.Exec(`delete from merchant`)
+		tx.Exec(`delete from refund`)
+		tx.Exec(`delete from capture`)
+		return nil
+	})
 	models.CloseDB()
 }
 
-func (ts *TestSuite) BeforeTest(suiteName, testName string) {
-	if strings.EqualFold(testName, "TestDoCapture") || strings.EqualFold(testName, "TestDoRefund") {
-
-		models.ExecDBFunc(func(tx *gorm.DB) error {
-			err := tx.Exec(`
-insert into authorize(authorize_id, merchant_id, credit_card_id, currency,amount,authorize_code, status) values
-(3000000,1000000,1000000,'USD', 50, '30000001', 'p')`).Error
-			//println(err)
-			err = tx.Exec(`insert into capture(capture_id, amount, authorize_id) values
-(3000000,20, 3000000 /* '10000001' */),
-(3000001,10, 3000000 /* '10000001' */),
-(3000002,20, 3000000 /* '10000001' */)`).Error
-			//println(err)
-			//reduce card amount
-			err = tx.Exec(`update credit_card set current_amount = current_amount - 50 where credit_card_id = 1000000`).Error
-			//println(err)
-			return err
-		})
-	}
+func (ts *TestSuite) AfterTest(suiteName, testName string) {
+	ts.DeleteTestMerchants()
 }
 
-func (ts *TestSuite) AfterTest(suiteName, testName string) {
-	ts.DeleteTestCaptures()
-	ts.DeleteTestAuthorizes()
-	ts.DeleteTestMerchants()
-	ts.DeleteTestCreditCards()
-	ts.ResetCreditCardAmount()
+func (ts *TestSuite) Create200USDAuthorize() (string, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	//validate token so we have a merchantId stored
+	merchant.Validate(&ctx, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtaWQiOjJ9.2UtNBvBcZJlwatvbiuFkFwWS7ZliHcIs7_ZxMTFt9sE")
 
-	/*if strings.EqualFold(testName, "TestDoCapture") || strings.EqualFold(testName, "TestDoRefund") {
-		ts.DeleteTestCaptures()
+	req := authorize.Request{
+		CreditCard: payment.CreditCard{
+			OwnerName: "eldad onojetah",
+			Number:    "4035 5010 0000 0008",
+			ExpMonth:  10,
+			ExpYear:   22,
+			CVV:       "TTT",
+		},
+		AmountCurrency: payment.AmountCurrency{
+			Amount: 200, Currency: "USD",
+		},
 	}
-	if strings.EqualFold(testName, "TestDoRefund") {
-		ts.ResetCreditCardAmount()
-	}*/
+	resp, err := authorize2.DoAuthorize(ctx, req)
+	cancel()
+
+	return resp.Code, err
 }

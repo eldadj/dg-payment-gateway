@@ -9,21 +9,27 @@ import (
 	"github.com/eldadj/dgpg/models"
 	authorize2 "github.com/eldadj/dgpg/models/authorize"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/gorm"
 	"testing"
 )
 
 func (ts *TestSuite) TestAddAuthorize() {
 	ts.CreateTestMerchants()
-	ts.CreateTestCreditCards()
+	//ts.CreateTestCreditCards()
+	creditCard := payment.CreditCard{
+		OwnerName: "eldad onojetah",
+		Number:    "4035 5010 0000 0008",
+		ExpMonth:  10,
+		ExpYear:   20,
+		CVV:       "123",
+	}
 	type args struct {
-		merchantId   int64
-		creditCardId int64
-		currency     string
-		amount       float64
+		req        authorize.Request
+		merchantId int64
 	}
 	tests := []struct {
 		name      string
-		args      args
+		arg       args
 		wantErr   bool
 		wantValue interface{}
 	}{
@@ -31,46 +37,63 @@ func (ts *TestSuite) TestAddAuthorize() {
 			name:      "invalid merchant_id",
 			wantErr:   true,
 			wantValue: errors.ErrAuthorizeInvalidFieldValue("merchant_id"),
-			args:      args{merchantId: -1, creditCardId: 1000000, currency: "USD", amount: 10},
-		},
-		{
-			name:      "invalid credit_card_id",
-			wantErr:   true,
-			wantValue: errors.ErrAuthorizeInvalidFieldValue("credit_card_id"),
-			args:      args{merchantId: 1000000, creditCardId: -1, currency: "USD", amount: 10},
+			arg: args{merchantId: -1, req: authorize.Request{
+				CreditCard: creditCard,
+				AmountCurrency: payment.AmountCurrency{
+					Amount:   500,
+					Currency: "USB",
+				},
+			}},
 		},
 		{
 			name:      "invalid currency",
 			wantErr:   true,
 			wantValue: errors.ErrAuthorizeInvalidFieldValue("currency"),
-			args:      args{merchantId: 1000000, creditCardId: 1000000, currency: "", amount: 10},
+			arg: args{merchantId: 1000000, req: authorize.Request{
+				CreditCard: creditCard,
+				AmountCurrency: payment.AmountCurrency{
+					Amount:   500,
+					Currency: "",
+				},
+			}},
 		},
 		{
 			name:      "invalid amount",
 			wantErr:   true,
 			wantValue: errors.ErrAuthorizeInvalidFieldValue("amount"),
-			args:      args{merchantId: 1000000, creditCardId: 1000000, currency: "USD", amount: 0},
+			arg: args{merchantId: 1000000, req: authorize.Request{
+				CreditCard: creditCard,
+				AmountCurrency: payment.AmountCurrency{
+					Amount:   0,
+					Currency: "USD",
+				},
+			}},
 		},
 		{
 			name: "authorize created",
-			//wantValue: models.ErrAuthorizeInvalidFieldValue("amount"),
-			args: args{merchantId: 1000000, creditCardId: 1000000, currency: "USD", amount: 100},
+			arg: args{merchantId: 1000000, req: authorize.Request{
+				CreditCard: creditCard,
+				AmountCurrency: payment.AmountCurrency{
+					Amount:   500,
+					Currency: "USD",
+				},
+			}},
 		},
 	}
 
 	for _, tt := range tests {
 		t := ts.T()
 		t.Run(tt.name, func(t *testing.T) {
-			arg := tt.args
-			ac := payment.AmountCurrency{Currency: arg.currency, Amount: arg.amount}
-			tx := models.NewTx()
-			resp, err := authorize2.Add(tx, arg.merchantId, arg.creditCardId, ac)
-			if tt.wantErr {
-				assert.NotNil(t, err)
-				assert.EqualError(t, err, tt.wantValue.(error).Error())
-			} else {
-				assert.NotEmpty(t, resp)
-			}
+			models.ExecDBFunc(func(tx *gorm.DB) error {
+				resp, err := authorize2.Add(tx, tt.arg.merchantId, tt.arg.req)
+				if tt.wantErr {
+					assert.NotNil(t, err)
+					assert.EqualError(t, err, tt.wantValue.(error).Error())
+				} else {
+					assert.NotEmpty(t, resp)
+				}
+				return err
+			})
 		})
 	}
 }
@@ -87,7 +110,7 @@ func (ts *TestSuite) TestAuthorize() {
 
 		req := authorize.Request{
 			CreditCard: payment.CreditCard{
-				OwnerName: "test owner",
+				OwnerName: "eldad onojetah",
 				Number:    "4035 5010 0000 0008",
 				ExpMonth:  10,
 				ExpYear:   22,
@@ -100,6 +123,7 @@ func (ts *TestSuite) TestAuthorize() {
 		resp, err := authorize2.DoAuthorize(ctx, req)
 		assert.Nil(t, err)
 		assert.NotEmpty(t, resp)
+		assert.Equal(t, 200.00, resp.Amount)
 
 		cancel()
 	})

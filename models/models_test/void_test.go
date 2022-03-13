@@ -1,18 +1,7 @@
 package models_test
 
-import (
-	"github.com/eldadj/dgpg/dto/payment"
-	"github.com/eldadj/dgpg/dto/payment/void"
-	"github.com/eldadj/dgpg/internal/errors"
-	void2 "github.com/eldadj/dgpg/models/void"
-	"github.com/stretchr/testify/assert"
-	"testing"
-)
-
 func (ts *TestSuite) TestVoid() {
-	ts.CreateTestCreditCards()
-	ts.CreateTestMerchants()
-	ts.CreateTestAuthorizes()
+	/*ts.CreateTestMerchants()
 	tests := []struct {
 		name          string
 		authorizeCode string
@@ -58,9 +47,7 @@ func (ts *TestSuite) TestVoid() {
 		})
 	}
 
-	ts.DeleteTestAuthorizes()
-	ts.DeleteTestMerchants()
-	ts.DeleteTestCreditCards()
+	ts.DeleteTestMerchants()*/
 }
 
 /*
