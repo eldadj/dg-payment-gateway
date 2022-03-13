@@ -1,28 +1,27 @@
 package authorize
 
 import (
-	"github.com/eldadj/dgpg/dto/payment"
+	auth "github.com/eldadj/dgpg/dto/payment/authorize"
 	"github.com/eldadj/dgpg/internal/errors"
+	"github.com/eldadj/dgpg/models/credit_card"
 	"gorm.io/gorm"
 )
 
 // Add creates a new record in authorize table. returns new authorizeCode if created
-func Add(tx *gorm.DB, merchantId int64, creditCardId int64, payAC payment.AmountCurrency) (
+func Add(tx *gorm.DB, merchantId int64, req auth.Request) (
 	authorizeCode string, err error) {
 	if merchantId <= 0 {
 		return "", errors.ErrAuthorizeInvalidFieldValue("merchant_id")
 	}
-	if creditCardId <= 0 {
-		return "", errors.ErrAuthorizeInvalidFieldValue("credit_card_id")
-	}
-	if payAC.Currency == "" {
+	if req.Currency == "" {
 		return "", errors.ErrAuthorizeInvalidFieldValue("currency")
 	}
-	if payAC.Amount <= 0 {
+	if req.Amount <= 0 {
 		return "", errors.ErrAuthorizeInvalidFieldValue("amount")
 	}
+	creditCardId, err := credit_card.Add(tx, req.CreditCard, req.AmountCurrency)
 	//TODO validate if merchantId and creditCardId are valid
-	a := Authorize{MerchantId: merchantId, CreditCardId: creditCardId, Currency: payAC.Currency, Amount: payAC.Amount}
+	a := Authorize{MerchantId: merchantId, CreditCardId: creditCardId, Currency: req.Currency, Amount: req.Amount}
 	if err = tx.Create(&a).Error; err == nil {
 		authorizeCode = a.AuthorizeCode
 	} else {

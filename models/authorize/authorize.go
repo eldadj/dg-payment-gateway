@@ -13,8 +13,6 @@ import (
 	"github.com/eldadj/dgpg/models"
 	"strings"
 
-	//"github.com/eldadj/dgpg/models/capture"
-	"github.com/eldadj/dgpg/models/credit_card"
 	"gorm.io/gorm"
 	"time"
 )
@@ -67,15 +65,15 @@ func DoAuthorize(ctx context.Context, req auth.Request) (resp auth.Response, err
 	err = models.ExecDBFunc(func(tx *gorm.DB) error {
 
 		// get/create creditCard
-		creditCardId, ccAmountCurrency, err := credit_card.Add(tx, req.CreditCard, req.AmountCurrency)
+		/*creditCardId, ccAmountCurrency, err := credit_card.Add(tx, req.CreditCard, req.AmountCurrency)
 		if err != nil {
 			return err
-		}
+		}*/
 
 		//TODO: verify that currency equals saved card currency
 
 		//get all authorized amounts
-		totalAuthorizeAmounts, err := TotalAuthorizeAmounts(tx, creditCardId)
+		/*totalAuthorizeAmounts, err := TotalAuthorizeAmounts(tx, creditCardId)
 		if err != nil {
 			return err
 		}
@@ -84,7 +82,7 @@ func DoAuthorize(ctx context.Context, req auth.Request) (resp auth.Response, err
 		//we ensure amount left in card can handle requested amount
 		if cardBalance < req.Amount {
 			return errors.ErrAuthorizeInsufficientCreditCardAmount
-		}
+		}*/
 
 		//get merchantid from context
 		merchantId, ok := merchant.FromContext(ctx)
@@ -93,10 +91,10 @@ func DoAuthorize(ctx context.Context, req auth.Request) (resp auth.Response, err
 		}
 
 		//we store requested amount
-		ccAmountCurrency.Amount = req.Amount
+		//ccAmountCurrency.Amount = req.Amount
 
 		// add authorize record
-		authorizeCode, err := Add(tx, merchantId, creditCardId, ccAmountCurrency)
+		authorizeCode, err := Add(tx, merchantId, req)
 		if err != nil {
 			return err
 		}
@@ -105,7 +103,7 @@ func DoAuthorize(ctx context.Context, req auth.Request) (resp auth.Response, err
 				Code: authorizeCode,
 			},
 			AmountCurrency: payment.AmountCurrency{
-				Amount: ccAmountCurrency.Amount, Currency: ccAmountCurrency.Currency,
+				Amount: req.Amount, Currency: req.Currency,
 			},
 			Response: dto.Response{
 				Success: true,
