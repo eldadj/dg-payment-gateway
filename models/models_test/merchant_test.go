@@ -9,6 +9,7 @@ import (
 )
 
 func (ts *TestSuite) TestAuthenticate() {
+	ts.CreateTestMerchants()
 	type args struct {
 		username string
 		password string
@@ -47,7 +48,7 @@ func (ts *TestSuite) TestAuthenticate() {
 			name:      "merchant authenticated",
 			wantErr:   false,
 			wantValue: errors.ErrMerchantAuthenticationFailed,
-			args:      args{username: "m1", password: "merchant1"},
+			args:      args{username: "tm1", password: "tm1"},
 		},
 	}
 
@@ -59,12 +60,13 @@ func (ts *TestSuite) TestAuthenticate() {
 				Username: arg.username,
 				Password: arg.password,
 			}
-			merchantId, err := models.Authenticate(req)
+			jwtToken, err := models.Authenticate(req)
 			if tt.wantErr {
 				assert.NotNil(t, err)
 				assert.EqualError(t, err, tt.wantValue.(error).Error())
 			} else {
-				assert.NotEmpty(t, merchantId)
+				assert.NotEmpty(t, jwtToken)
+				assert.Nil(t, err)
 			}
 		})
 	}

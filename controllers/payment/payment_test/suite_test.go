@@ -23,10 +23,7 @@ func (ts *TestSuite) SetupSuite() {
 }
 
 func (ts *TestSuite) TearDownSuite() {
-	ts.DeleteTestCaptures()
-	ts.DeleteTestAuthorizes()
 	ts.DeleteTestMerchants()
-	ts.DeleteTestCreditCards()
 	models.CloseDB()
 }
 

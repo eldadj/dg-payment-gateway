@@ -99,7 +99,6 @@ func (ts *TestSuite) TestAddAuthorize() {
 }
 
 func (ts *TestSuite) TestAuthorize() {
-	ts.DeleteTestCreditCards()
 	ts.CreateTestMerchants()
 
 	ts.T().Run("test_authorize", func(t *testing.T) {

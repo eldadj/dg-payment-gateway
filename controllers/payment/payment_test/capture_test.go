@@ -8,12 +8,9 @@ import (
 	"github.com/eldadj/dgpg/dto/payment/request"
 	"github.com/eldadj/dgpg/dto/payment/response"
 	"github.com/eldadj/dgpg/internal/errors"
-	"github.com/eldadj/dgpg/models"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/gorm"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 )
 
@@ -68,11 +65,12 @@ func (s *TestSuite) TestCapture() {
 }
 
 func (s *TestSuite) TestCaptureSuccess() {
-	s.T().Run("capture success", func(t *testing.T) {
+	authorizeCode, amountAuthorized, err := s.AuthoriseTestCreateUSDAuthorize()
+	assert.Nil(s.T(), err)
+	s.T().Run("controller capture success", func(t *testing.T) {
 		req := request.Request{
 			AuthorizeCode: payment.AuthorizeCode{
-				//code is tied to a credit card with 1000 as amount
-				Code: "40000001",
+				Code: authorizeCode,
 			},
 			Amount: 20,
 		}
@@ -85,20 +83,7 @@ func (s *TestSuite) TestCaptureSuccess() {
 			var resp response.Response
 			err = json.Unmarshal(w.Body.Bytes(), &resp)
 			assert.Nil(t, err)
-			assert.Equal(t, 980, resp.Amount)
+			assert.Equal(t, amountAuthorized-20, resp.Amount)
 		}
 	})
-}
-
-func (s *TestSuite) BeforeTest(suiteName, testName string) {
-	if strings.EqualFold("TestCaptureSuccess", testName) {
-		s.CreateTestCreditCards()
-		models.ExecDBFunc(func(tx *gorm.DB) error {
-			err := tx.Exec(`
-insert into authorize(authorize_id, merchant_id, credit_card_id, currency,amount,authorize_code, status) values 
-(4000000,2,1000000,'USD', 1000, '40000001', 'n')
-`).Error
-			return err
-		})
-	}
 }

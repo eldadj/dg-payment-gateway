@@ -1,7 +1,20 @@
 package models_test
 
+import (
+	"github.com/eldadj/dgpg/dto/payment"
+	"github.com/eldadj/dgpg/dto/payment/void"
+	"github.com/eldadj/dgpg/internal/errors"
+	void2 "github.com/eldadj/dgpg/models/void"
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
+
 func (ts *TestSuite) TestVoid() {
-	/*ts.CreateTestMerchants()
+	ts.CreateTestMerchants()
+	authorizeCodeWithCapture, err := ts.VoidTestCreate200USDAuthorizeCapture20USD()
+	assert.Nil(ts.T(), err)
+	authorizeCodeCanVoid, _, err := ts.AuthoriseTestCreateUSDAuthorize()
+
 	tests := []struct {
 		name          string
 		authorizeCode string
@@ -16,15 +29,15 @@ func (ts *TestSuite) TestVoid() {
 		},
 		{
 			name:          "cannot void authorize code",
-			authorizeCode: ts.AuthorizeCodeAlreadyVoided(),
+			authorizeCode: authorizeCodeWithCapture,
 			wantErr:       true,
 			wantValue:     errors.ErrAuthorizeCannotVoid,
 		},
 		{
 			name:          "authorize code voided",
-			authorizeCode: ts.AuthorizeCodeCanBeVoided(),
+			authorizeCode: authorizeCodeCanVoid,
 			wantErr:       false,
-			wantValue:     ts.AuthorizeCodeCanBeVoided(),
+			wantValue:     authorizeCodeCanVoid,
 		},
 	}
 
@@ -46,8 +59,6 @@ func (ts *TestSuite) TestVoid() {
 			//cancel()
 		})
 	}
-
-	ts.DeleteTestMerchants()*/
 }
 
 /*
