@@ -2,6 +2,8 @@ package models_test
 
 import (
 	"context"
+	"testing"
+
 	"github.com/eldadj/dgpg/dto/payment"
 	"github.com/eldadj/dgpg/dto/payment/authorize"
 	"github.com/eldadj/dgpg/internal/errors"
@@ -9,7 +11,6 @@ import (
 	"github.com/eldadj/dgpg/models"
 	authorize2 "github.com/eldadj/dgpg/models/authorize"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func (ts *TestSuite) TestAddAuthorize() {
@@ -80,15 +81,15 @@ func (ts *TestSuite) TestAuthorize() {
 	ts.CreateTestMerchants()
 
 	ts.T().Run("test_authorize", func(t *testing.T) {
-		ctx, _ := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
 		//validate token so we have a merchantId stored
-		err := merchant.Validate(&ctx, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtaWQiOjF9.xhy07275jrBO0sGmIDAe4TwgVNrLgd146PSae3os3MI")
+		err := merchant.Validate(&ctx, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtaWQiOjJ9.2UtNBvBcZJlwatvbiuFkFwWS7ZliHcIs7_ZxMTFt9sE")
 		assert.Nil(t, err)
 
 		req := authorize.Request{
 			CreditCard: payment.CreditCard{
 				OwnerName: "test owner",
-				Number:    "T234 E234 S234 T234 1234",
+				Number:    "4035 5010 0000 0008",
 				ExpMonth:  10,
 				ExpYear:   22,
 				CVV:       "abc",
@@ -100,6 +101,8 @@ func (ts *TestSuite) TestAuthorize() {
 		resp, err := authorize2.DoAuthorize(ctx, req)
 		assert.Nil(t, err)
 		assert.NotEmpty(t, resp)
+
+		cancel()
 	})
 }
 

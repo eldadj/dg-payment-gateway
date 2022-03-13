@@ -35,19 +35,23 @@ var merchantAuthenticated = func(ctx *context.Context) {
 	header := strings.Split(ctx.Input.Header("Authorization"), " ")
 	if header[0] != "Bearer" {
 		errFunc("authentication header not found")
+		return
 	}
 	if len(header) < 2 {
 		errFunc("authentication token not found")
+		return
 	}
 	token := header[1]
 	if token == "" {
 		errFunc("authentication token is invalid")
+		return
 	}
 	//validate the jwt token and store merchantId in context
 	gCtx := ctx.Request.Context()
 	//fmt.Printf("b4 ctx = %+v\n", ctx)
 	if err := merchant.Validate(&gCtx, token); err != nil {
 		errFunc(err.Error())
+		return
 	}
 	ctx.Request = ctx.Request.Clone(gCtx)
 }

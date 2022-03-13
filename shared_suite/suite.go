@@ -35,8 +35,8 @@ func (ts *TestSuite) CreateTestCreditCards() {
 		//merchantId: 1000000, creditCardId: 1000000, currency: "USD", amount: 100
 		tx.Exec(`
 insert into credit_card(credit_card_id, owner_name,card_no,exp_month,exp_year,cvv,currency_code,current_amount) values
-(1000000,'Test Card 1', 'T123 E123 S123 T123 1234', 12, 22, 'CVV', 'USD', 1000),
-(1000001,'Test Card 2', 'T234 E234 S234 T234 2345', 10, 22, 'CV2', 'EUR', 1500)`)
+(1000000,'Test Card 1', '4000 0600 0000 0006', 12, 22, 'CVV', 'USD', 1000),
+(1000001,'Test Card 2', '4035 5010 0000 0008', 10, 22, 'CV2', 'EUR', 1500)`)
 		return nil
 	})
 }
