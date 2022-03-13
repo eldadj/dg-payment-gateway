@@ -47,6 +47,7 @@ var (
 	ErrAuthorizeVoidFailed                 = errors.New("error voiding authorize code")
 	ErrAuthorizeLoadCreditCard             = errors.New("error loading credit card info for authorize code")
 	ErrAuthorizeAmountsAuthorize           = errors.New("error reading amounts already authorized")
+	ErrCreditCardInvalid                   = errors.New("invalid credit card details")
 	ErrCreditCardLoadAmountCurrency        = errors.New("error getting credit card amount/currency")
 	ErrCreditCardUpdateAmount              = errors.New("error updating credit card amount")
 	ErrCreditCardLoad                      = errors.New("error loading credit card")

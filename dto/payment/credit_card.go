@@ -1,8 +1,6 @@
 package payment
 
-import "errors"
-
-var ErrCreditCardInvalid = errors.New("invalid credit card details")
+import "github.com/eldadj/dgpg/internal/errors"
 
 type CreditCard struct {
 	OwnerName string `json:"owner_name"`
@@ -14,7 +12,7 @@ type CreditCard struct {
 
 func (c *CreditCard) Validate() error {
 	if c.OwnerName == "" || c.Number == "" || c.ExpMonth <= 0 || c.ExpYear <= 0 || c.CVV == "" {
-		return ErrCreditCardInvalid
+		return errors.ErrCreditCardInvalid
 	}
 	return nil
 }
