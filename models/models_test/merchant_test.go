@@ -45,10 +45,9 @@ func (ts *TestSuite) TestAuthenticate() {
 			args:      args{username: "m1", password: "test"},
 		},
 		{
-			name:      "merchant authenticated",
-			wantErr:   false,
-			wantValue: errors.ErrMerchantAuthenticationFailed,
-			args:      args{username: "tm1", password: "tm1"},
+			name:    "merchant authenticated",
+			wantErr: false,
+			args:    args{username: "tm1", password: "tm1"},
 		},
 	}
 

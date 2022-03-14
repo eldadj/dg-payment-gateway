@@ -53,6 +53,7 @@ func (s *TestSuite) TestVoid() {
 			b, err := json.Marshal(tt.req)
 			assert.Nil(t, err)
 			r, _ := http.NewRequest("POST", "/void", bytes.NewReader(b))
+			r, err = s.ValidateMerchantUpdateRequestContext(r)
 			web.BeeApp.Handlers.ServeHTTP(w, r)
 			assert.Equal(t, tt.wantCode, w.Code)
 			assert.Contains(t, w.Body.String(), tt.wantResp)

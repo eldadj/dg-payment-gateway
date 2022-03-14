@@ -129,6 +129,7 @@ func (ts *TestSuite) TestAuthorize() {
 	})
 }
 
+/*
 func (ts *TestSuite) TestGet() {
 	ts.CreateTestMerchants()
 
@@ -182,3 +183,4 @@ func (ts *TestSuite) TestGet() {
 		cancel()
 	})
 }
+*/

@@ -34,6 +34,7 @@ func Authenticate(req auth.Request) (jwtToken string, err error) {
 		var m Merchant
 		/*stmt := tx.Session(&gorm.Session{DryRun: true}).Find(&m, "user_name = ?", req.Username).Statement
 		println(stmt.SQL.String())*/
+		//println("username: ", req.Username, "; password: ", req.Password)
 		result := tx.Find(&m, "user_name = ?", req.Username)
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) || result.RowsAffected == 0 {
 			return eutil.ErrMerchantAuthenticationFailed

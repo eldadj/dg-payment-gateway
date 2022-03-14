@@ -38,8 +38,26 @@ func Test(t *testing.T) {
 	suite.Run(t, &TestSuite{})
 }
 
+func (ts *TestSuite) SetupSuite() {
+	models.InitDB()
+	// add test values
+}
+
+func (ts *TestSuite) TearDownSuite() {
+	//ts.DeleteTestMerchants()
+	models.ExecDBFunc(func(tx *gorm.DB) error {
+		tx.Exec(`delete from credit_card`)
+		tx.Exec(`delete from authorize`)
+		tx.Exec(`delete from merchant where user_name like 'tm*'`)
+		tx.Exec(`delete from refund`)
+		tx.Exec(`delete from capture`)
+		return nil
+	})
+	models.CloseDB()
+}
+
 func (ts *TestSuite) CreateTestMerchants() {
-	ts.DeleteTestMerchants()
+	//ts.DeleteTestMerchants()
 	models.ExecDBFunc(func(tx *gorm.DB) error {
 		//merchantId: 1000000, creditCardId: 1000000, currency: "USD", amount: 100
 		tx.Exec(`
@@ -50,12 +68,12 @@ insert into merchant(merchant_id, fullname, user_name, pwd_hash) values
 	})
 }
 
-func (ts *TestSuite) DeleteTestMerchants() {
-	models.ExecDBFunc(func(tx *gorm.DB) error {
-		tx.Exec(`delete from merchant where merchant_id >= 1000000`)
-		return nil
-	})
-}
+//func (ts *TestSuite) DeleteTestMerchants() {
+//	models.ExecDBFunc(func(tx *gorm.DB) error {
+//		tx.Exec(`delete from merchant where merchant_id >= 1000000`)
+//		return nil
+//	})
+//}
 
 func (ts *TestSuite) AuthoriseTestCreateUSDAuthorize() (string, float64, error) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -87,6 +105,7 @@ func (ts *TestSuite) CaptureTestCreate200USDAuthorizeCapture10N50USD() (string, 
 	authorizeCode, authorizeAmount, err := ts.AuthoriseTestCreateUSDAuthorize()
 	//capture 10USD
 	req := request.Request{
+		Request:       payment.Request{MerchantId: 2},
 		AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
 		Amount:        10,
 	}
@@ -94,6 +113,7 @@ func (ts *TestSuite) CaptureTestCreate200USDAuthorizeCapture10N50USD() (string, 
 
 	//capture  50USD
 	req = request.Request{
+		Request:       payment.Request{MerchantId: 2},
 		AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
 		Amount:        50,
 	}
@@ -108,6 +128,7 @@ func (ts *TestSuite) VoidTestCreate200USDAuthorizeCapture20USD() (string, error)
 	authorizeCode, _, err := ts.AuthoriseTestCreateUSDAuthorize()
 	//capture 10USD
 	req := request.Request{
+		Request:       payment.Request{MerchantId: 2},
 		AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
 		Amount:        20,
 	}

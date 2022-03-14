@@ -27,6 +27,7 @@ func (s *TestSuite) TestCapture() {
 			req: request.Request{
 				AuthorizeCode: payment.AuthorizeCode{Code: "1234"},
 				Amount:        0,
+				Request:       payment.Request{MerchantId: 2},
 			},
 			wantResp: errors.ErrCaptureAmount.Error(),
 		},
@@ -36,6 +37,7 @@ func (s *TestSuite) TestCapture() {
 			req: request.Request{
 				AuthorizeCode: payment.AuthorizeCode{Code: ""},
 				Amount:        20,
+				Request:       payment.Request{MerchantId: 2},
 			},
 			wantResp: errors.ErrAuthorizeCodeInvalid.Error(),
 		},
@@ -45,6 +47,7 @@ func (s *TestSuite) TestCapture() {
 			req: request.Request{
 				AuthorizeCode: payment.AuthorizeCode{Code: "1234"},
 				Amount:        20,
+				Request:       payment.Request{MerchantId: 2},
 			},
 			wantResp: errors.ErrAuthorizeCodeNotFound.Error(),
 		},
@@ -57,6 +60,7 @@ func (s *TestSuite) TestCapture() {
 			b, err := json.Marshal(tt.req)
 			assert.Nil(t, err)
 			r, _ := http.NewRequest("POST", "/capture", bytes.NewReader(b))
+			r, err = s.ValidateMerchantUpdateRequestContext(r)
 			web.BeeApp.Handlers.ServeHTTP(w, r)
 			assert.Equal(t, tt.wantCode, w.Code)
 			assert.Contains(t, w.Body.String(), tt.wantResp)
@@ -78,6 +82,7 @@ func (s *TestSuite) TestCaptureSuccess() {
 		b, err := json.Marshal(req)
 		assert.Nil(t, err)
 		r, _ := http.NewRequest("POST", "/capture", bytes.NewReader(b))
+		r, err = s.ValidateMerchantUpdateRequestContext(r)
 		web.BeeApp.Handlers.ServeHTTP(w, r)
 		if assert.Equal(t, 200, w.Code) {
 			var resp response.Response

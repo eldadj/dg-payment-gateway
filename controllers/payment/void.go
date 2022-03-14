@@ -13,6 +13,14 @@ func (c *BaseController) Void() {
 		c.ServeError(500, err)
 		return
 	}
+
+	//set request merchant id
+	err = SetMerchantId(c.Ctx.Request.Context(), &req.Request)
+	if err != nil {
+		c.ServeError(500, err)
+		return
+	}
+
 	resp, err := void2.Void(*req)
 	if err != nil {
 		c.ServeError(500, err)

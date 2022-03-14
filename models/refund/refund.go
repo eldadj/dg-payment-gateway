@@ -78,6 +78,7 @@ func DoRefund(req request.Request) (resp response.Response, err error) {
 		}
 		resp.Amount = payAC.Amount
 		resp.Currency = payAC.Currency
+		resp.Success = true
 
 		return err
 	})

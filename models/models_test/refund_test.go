@@ -51,6 +51,7 @@ func (ts *TestSuite) TestDoRefund() {
 		t := ts.T()
 		t.Run(tt.name, func(t *testing.T) {
 			req := request.Request{
+				Request:       payment.Request{MerchantId: 2},
 				AuthorizeCode: payment.AuthorizeCode{Code: tt.arg.authorizeCode},
 				Amount:        tt.arg.amount,
 			}
@@ -71,6 +72,7 @@ func (ts *TestSuite) TestDoRefund() {
 
 		authorizeAmountBalance := resp.Amount
 		req := request.Request{
+			Request:       payment.Request{MerchantId: 2},
 			AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
 			Amount:        10,
 		}

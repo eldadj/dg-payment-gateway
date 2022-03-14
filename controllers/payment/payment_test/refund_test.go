@@ -58,6 +58,7 @@ func (s *TestSuite) TestRefund() {
 			b, err := json.Marshal(tt.req)
 			assert.Nil(t, err)
 			r, _ := http.NewRequest("POST", "/refund", bytes.NewReader(b))
+			r, err = s.ValidateMerchantUpdateRequestContext(r)
 			web.BeeApp.Handlers.ServeHTTP(w, r)
 			assert.Equal(t, tt.wantCode, w.Code)
 			assert.Contains(t, w.Body.String(), tt.wantResp)
@@ -72,10 +73,12 @@ func (s *TestSuite) TestRefund() {
 		req := &request.Request{
 			AuthorizeCode: payment.AuthorizeCode{Code: authorizeCode},
 			Amount:        amountToRefund,
+			Request:       payment.Request{MerchantId: 2},
 		}
 		b, err := json.Marshal(req)
 		assert.Nil(t, err)
 		r, _ := http.NewRequest("POST", "/refund", bytes.NewReader(b))
+		r, err = s.ValidateMerchantUpdateRequestContext(r)
 		web.BeeApp.Handlers.ServeHTTP(w, r)
 		assert.Equal(t, 200, w.Code)
 		wantResp := response.Response{

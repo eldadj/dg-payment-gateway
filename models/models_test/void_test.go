@@ -47,6 +47,7 @@ func (ts *TestSuite) TestVoid() {
 		t.Run(tt.name, func(t *testing.T) {
 			req := void.Request{
 				AuthorizeCode: payment.AuthorizeCode{Code: tt.authorizeCode},
+				Request:       payment.Request{MerchantId: 2},
 			}
 			//ctx, cancel := context.WithCancel(context.Background())
 			resp, err := void2.Void(req)

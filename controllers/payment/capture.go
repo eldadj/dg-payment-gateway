@@ -14,6 +14,13 @@ func (c *BaseController) Capture() {
 		return
 	}
 
+	//set request merchant id
+	err = SetMerchantId(c.Ctx.Request.Context(), &req.Request)
+	if err != nil {
+		c.ServeError(500, err)
+		return
+	}
+
 	resp, err := capture2.DoCapture(req)
 	if err != nil {
 		c.ServeError(500, err)
